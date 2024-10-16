@@ -1,6 +1,14 @@
 const debug = require('debug')('knex-migrator:lock-table');
 const DatabaseInfo = require('@tryghost/database-info');
 
+const MySQLErrors = {
+    MULTIPLE_PRI_KEY: 'ER_MULTIPLE_PRI_KEY'
+};
+
+const PostgresErrors = {
+    MULTIPLE_PRI_KEY: '42P16'
+};
+
 /**
  * Checks if primary key index exists in a table over the given columns.
  */
@@ -37,7 +45,7 @@ function addPrimaryKey(tableName, columns, knex) {
     return knex.schema.table(tableName, function (table) {
         table.primary(columns);
     }).catch((err) => {
-        if (err.code === 'ER_MULTIPLE_PRI_KEY') {
+        if (err.code === MySQLErrors.MULTIPLE_PRI_KEY || err.code === PostgresErrors.MULTIPLE_PRI_KEY) {
             debug(`Primary key constraint for: ${columns} already exists for table: ${tableName}`);
             return;
         }
